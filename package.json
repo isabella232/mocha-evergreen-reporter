@@ -1,0 +1,17 @@
+{
+  "name": "mocha-evergreen-reporter",
+  "description": "Mocha reporter that complies with Evergreen.",
+  "author": "Judah Schvimer <judah@mongodb.com>",
+  "version": "0.0.1",
+  "bugs": "https://github.com/mongodb-js/mocha-evergreen-reporter/issues",
+  "homepage": "https://github.com/mongodb-js/mocha-evergreen-reporter",
+  "repository": "git://github.com/mongodb-js/mocha-evergreen-reporter.git",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mongodb-js"
+  ],
+  "dependencies": {
+    "mocha": "^2.3.2"
+  },
+  "devDependencies": {}
+}
