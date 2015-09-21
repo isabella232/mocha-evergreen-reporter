@@ -104,10 +104,6 @@ function EvergreenReporter(runner) {
     console.log("Failed: %s", stats.failures);
     console.log("Pending: %s", stats.pending);
     fs.writeFileSync('reporter.json', output);
-    if (err) {
-      console.log(err);
-      process.exit(err);
-    }
     process.exit(failed);
   });
 }
