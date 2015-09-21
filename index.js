@@ -1,4 +1,4 @@
-module.exports = Evergreen;
+exports = module.exports = EvergreenReporter;
 
 /**
  * Module dependencies.
@@ -14,9 +14,10 @@ var fs = require('fs');
  * @api public
  * @param {Runner} runner
  */
-function Evergreen(runner) {
+function EvergreenReporter(runner) {
 
   var self = this;
+  var indents = 0;
   var stats = this.stats = {
     tests: 0,
     passes: 0,
@@ -28,6 +29,11 @@ function Evergreen(runner) {
 
   this.runner = runner;
   runner.stats = stats;
+
+  function indent() {
+    return Array(indents).join('  ');
+  }
+
   /*
    * Runs on the start of all of the tests
    */
@@ -35,27 +41,45 @@ function Evergreen(runner) {
     stats.start = new Date();
   });
 
+  runner.on('suite', function(suite) {
+    console.log(suite.title);
+    console.log(suite.file);
+    indents++;
+  });
+
+  runner.on('suite end', function() {
+    console.log();
+    indents--;
+  });
   /**
    * Runs after every test ends
    */
   runner.on('test end', function(test) {
-    tests.push(test);
     stats.tests++;
   });
 
   runner.on('pass', function(test) {
-    console.log(test.fullTitle() + ": Passed!");
+    console.log(indent() + test.title + ": Passed!");
+    console.log();
     stats.passes++;
+    tests.push(test);
   });
 
-  runner.on('fail', function(test) {
-    console.log(test.fullTitle() + ": Failed :(\n");
+  runner.on('fail', function(test, err) {
+    test.err = err;
+    console.log(indent() + test.title + ": Failed :(");
+    console.log(test.err.message);
+    console.log(test.err.stack);
+    console.log();
     stats.failures++;
+    tests.push(test);
   });
 
   runner.on('pending', function(test) {
-    console.log(test.fullTitle() + ": Pending\n");
+    console.log(indent() + test.title + ": Pending");
+    console.log();
     stats.pending++;
+    tests.push(test);
   });
 
   /**
@@ -76,15 +100,15 @@ function Evergreen(runner) {
     runner.testResults = obj;
     var output = JSON.stringify(obj, null, 2);
     console.log(output);
-    console.log("Passed: %s", stats.passed);
-    console.log("Failed: %s", stats.failed);
+    console.log("Passed: %s", stats.passes);
+    console.log("Failed: %s", stats.failures);
     console.log("Pending: %s", stats.pending);
-    fs.writeFile('reporter.out', output, function(err){
-      if (err) {
-        process.exit(err);
-      }
-      process.exit(failed);
-    });
+    fs.writeFileSync('reporter.out', output);
+    if (err) {
+      console.log(err);
+      process.exit(err);
+    }
+    process.exit(failed);
   });
 }
 
@@ -99,8 +123,10 @@ function report(test) {
   return {
     title: test.title,
     fullTitle: test.fullTitle(),
+    file: test.file,
     duration: test.duration,
-    err: errorJSON(test.err || {})
+    err: errorJSON(test.err || {}),
+    status: test.state
   };
 }
 
@@ -119,4 +145,3 @@ function errorJSON(err) {
   return res;
 }
 
-exports = module.exports = EvergreenReporter;
