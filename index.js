@@ -88,11 +88,12 @@ function EvergreenReporter(runner) {
   });
 
   runner.on('pending', function(test) {
-    console.log(indent() + test.title + ": Pending");
+    console.log(indent() + test.title + ": Skip");
     console.log();
     stats.pending++;
-    test.state = 'pending';
-    test.elapsed = 0;
+    test.state = 'skip';
+    test.duration = 0;
+    test.exit_code = 0;
     test.start = Date.now();
   });
 
@@ -116,7 +117,7 @@ function EvergreenReporter(runner) {
     fs.writeFileSync('report.json', output);
     console.log("Passed: %s", stats.passes);
     console.log("Failed: %s", stats.failures);
-    console.log("Pending: %s", stats.pending);
+    console.log("Skipping: %s", stats.pending);
     process.exit(stats.failures);
   });
 }
@@ -137,7 +138,7 @@ function report(test) {
     end: test.end,
     exit_code: test.exit_code,
     elapsed: test.duration,
-    err: errorJSON(test.err || {}),
+    error: errorJSON(test.err || {}),
     status: test.state
   };
 }
