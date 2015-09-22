@@ -60,7 +60,7 @@ function EvergreenReporter(runner) {
    * Runs before every test begins
    */
   runner.on('test', function(test) {
-    test.start = Date.now();
+    test.start = Date.now()/1000;
   });
 
   /**
@@ -77,21 +77,19 @@ function EvergreenReporter(runner) {
     stats.passes++;
     test.exit_code = 0;
     test.state = 'pass';
-    test.end = Date.now();
-    writeLogs(test, logDir);
+    test.end = Date.now()/1000;
   });
 
   runner.on('fail', function(test, err) {
     test.err = err;
     test.exit_code = 1;
     test.state = 'fail';
-    test.end = Date.now();
+    test.end = Date.now()/1000;
     console.log(indent() + test.title + ": Failed :(");
     console.log(test.err.message);
     console.log(test.err.stack);
     console.log();
     stats.failures++;
-    writeLogs(test, logDir);
   });
 
   runner.on('pending', function(test) {
@@ -101,16 +99,15 @@ function EvergreenReporter(runner) {
     test.state = 'skip';
     test.duration = 0;
     test.exit_code = 0;
-    test.start = Date.now();
+    test.start = Date.now()/1000;
     test.end = test.start;
-    writeLogs(test, logDir);
   });
 
   /**
    * Runs after all tests have completed
    */
   runner.on('end', function() {
-    stats.end = Date.now();
+    stats.end = Date.now()/1000;
     stats.duration = stats.end - stats.start;
 
     var obj = {
@@ -144,7 +141,7 @@ function report(test) {
     start: test.start,
     end: test.end,
     exit_code: test.exit_code,
-    elapsed: test.duration,
+    elapsed: test.duration/1000,
     error: errorJSON(test.err || {}),
     url: test.url,
     status: test.state
