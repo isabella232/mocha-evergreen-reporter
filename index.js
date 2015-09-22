@@ -5,7 +5,8 @@ exports = module.exports = EvergreenReporter;
  */
 var Mocha = require('mocha');
 var fs = require('fs');
-
+var mkdirp = require('mkdirp');
+var format = require('util').format;
 
 
 /**
@@ -16,6 +17,7 @@ var fs = require('fs');
  */
 function EvergreenReporter(runner) {
 
+  var logDir = 'test_logs';
   var self = this;
   var indents = 0;
   var stats = this.stats = {
@@ -43,7 +45,9 @@ function EvergreenReporter(runner) {
 
   runner.on('suite', function(suite) {
     console.log(suite.title);
-    console.log(suite.file);
+    if (suite.file) {
+      console.log(suite.file);
+    }
     indents++;
   });
 
@@ -64,7 +68,6 @@ function EvergreenReporter(runner) {
    */
   runner.on('test end', function(test) {
     stats.tests++;
-    test.end = Date.now();
     tests.push(test);
   });
 
@@ -74,17 +77,21 @@ function EvergreenReporter(runner) {
     stats.passes++;
     test.exit_code = 0;
     test.state = 'pass';
+    test.end = Date.now();
+    writeLogs(test, logDir);
   });
 
   runner.on('fail', function(test, err) {
     test.err = err;
     test.exit_code = 1;
     test.state = 'fail';
+    test.end = Date.now();
     console.log(indent() + test.title + ": Failed :(");
     console.log(test.err.message);
     console.log(test.err.stack);
     console.log();
     stats.failures++;
+    writeLogs(test, logDir);
   });
 
   runner.on('pending', function(test) {
@@ -95,6 +102,8 @@ function EvergreenReporter(runner) {
     test.duration = 0;
     test.exit_code = 0;
     test.start = Date.now();
+    test.end = test.start;
+    writeLogs(test, logDir);
   });
 
   /**
@@ -131,16 +140,62 @@ function EvergreenReporter(runner) {
  */
 function report(test) {
   return {
-    title: test.title,
-    fullTitle: test.fullTitle(),
-    test_file: test.file,
+    test_file: test.file + ": " + test.fullTitle(),
     start: test.start,
     end: test.end,
     exit_code: test.exit_code,
     elapsed: test.duration,
     error: errorJSON(test.err || {}),
+    url: test.url,
     status: test.state
   };
+}
+
+/**
+ * Writes logs to a file in the specified directory
+ * @param {test} test
+ * @param {string} dirName
+ */
+function writeLogs(test, dirName) {
+  var logs = test.fullTitle() + "\n" +
+    test.file +
+    "\nStart: " + test.start +
+    "\nEnd: " + test.end +
+    "\nElapsed: " + test.duration +
+    "\nStatus: " + test.state;
+    if (test.state === 'fail') {
+      logs += "\nError: " + test.err.stack;
+    }
+  mkdirp.sync(testDir(test, dirName));
+  fs.writeFileSync(testURL(test, dirName), logs);
+  test.url = testURL(test, dirName);
+}
+
+/**
+ * Creates the test url for a test
+ * @param {test} test
+ * @param {string} dirName
+ * @return {string} testURL
+ */
+function testURL(test, dirName) {
+  return format("%s/%s.log", testDir(test, dirName), test.fullTitle());
+}
+
+/**
+ * Creates the directory that the test log is going to go in
+ * @param {test} test
+ * @param {string} dirName
+ * @return {string} testDir
+ */
+function testDir(test, dirName) {
+  if (test.file){
+    var testFile = test.file.split("/").pop();
+    testFile = testFile.split(".")[0];
+    return format("%s/%s", dirName, testFile);
+  }
+  else {
+    return dirName;
+  }
 }
 
 /**
