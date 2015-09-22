@@ -38,7 +38,7 @@ function EvergreenReporter(runner) {
    * Runs on the start of all of the tests
    */
   runner.on('start', function() {
-    stats.start = new Date();
+    stats.start = Date.now();
   });
 
   runner.on('suite', function(suite) {
@@ -51,47 +51,61 @@ function EvergreenReporter(runner) {
     console.log();
     indents--;
   });
+
+  /**
+   * Runs before every test begins
+   */
+  runner.on('test', function(test) {
+    test.start = Date.now();
+  });
+
   /**
    * Runs after every test ends
    */
   runner.on('test end', function(test) {
     stats.tests++;
+    test.end = Date.now();
+    tests.push(test);
   });
 
   runner.on('pass', function(test) {
     console.log(indent() + test.title + ": Passed!");
     console.log();
     stats.passes++;
-    tests.push(test);
+    test.exit_code = 0;
+    test.state = 'pass';
   });
 
   runner.on('fail', function(test, err) {
     test.err = err;
+    test.exit_code = 1;
+    test.state = 'fail';
     console.log(indent() + test.title + ": Failed :(");
     console.log(test.err.message);
     console.log(test.err.stack);
     console.log();
     stats.failures++;
-    tests.push(test);
   });
 
   runner.on('pending', function(test) {
     console.log(indent() + test.title + ": Pending");
     console.log();
     stats.pending++;
-    tests.push(test);
+    test.state = 'pending';
+    test.elapsed = 0;
+    test.start = Date.now();
   });
 
   /**
    * Runs after all tests have completed
    */
   runner.on('end', function() {
-    stats.end = new Date();
-    stats.durection = stats.end - stats.start;
+    stats.end = Date.now();
+    stats.duration = stats.end - stats.start;
 
     var obj = {
-      end: stats.end.value,
-      start: stats.start.value,
+      end: stats.end,
+      start: stats.start,
       elapsed: stats.duration,
       failures: stats.failures,
       results: tests.map(report),
@@ -99,12 +113,11 @@ function EvergreenReporter(runner) {
 
     runner.testResults = obj;
     var output = JSON.stringify(obj, null, 2);
-    console.log(output);
+    fs.writeFileSync('report.json', output);
     console.log("Passed: %s", stats.passes);
     console.log("Failed: %s", stats.failures);
     console.log("Pending: %s", stats.pending);
-    fs.writeFileSync('reporter.json', output);
-    process.exit(failed);
+    process.exit(stats.failures);
   });
 }
 
@@ -119,8 +132,11 @@ function report(test) {
   return {
     title: test.title,
     fullTitle: test.fullTitle(),
-    file: test.file,
-    duration: test.duration,
+    test_file: test.file,
+    start: test.start,
+    end: test.end,
+    exit_code: test.exit_code,
+    elapsed: test.duration,
     err: errorJSON(test.err || {}),
     status: test.state
   };
