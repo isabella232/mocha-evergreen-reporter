@@ -2,7 +2,7 @@
   "name": "mocha-evergreen-reporter",
   "description": "Mocha reporter that complies with Evergreen.",
   "author": "Judah Schvimer <judah@mongodb.com>",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "bugs": "https://github.com/mongodb-js/mocha-evergreen-reporter/issues",
   "homepage": "https://github.com/mongodb-js/mocha-evergreen-reporter",
   "repository": "git://github.com/mongodb-js/mocha-evergreen-reporter.git",
