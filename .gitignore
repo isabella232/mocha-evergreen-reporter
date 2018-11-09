@@ -1,3 +1,5 @@
+report.json
+
 # Logs
 logs
 *.log
@@ -28,3 +30,5 @@ node_modules
 
 # Module packed locally
 *.tgz
+
+package-lock.json

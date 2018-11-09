@@ -11,8 +11,12 @@
     "mongodb-js"
   ],
   "dependencies": {
+    "debug": "^4.1.0",
     "mkdirp": "^0.5.1",
-    "mocha": "^3.2.0"
+    "mocha": ">= 3.2.0"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "scripts": {
+    "test": "mocha --reporter=./index.js"
+  }
 }
